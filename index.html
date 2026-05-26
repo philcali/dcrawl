@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>dcrawl</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="screen-character-select" class="screen active">
+    <h1>dcrawl</h1>
+    <p>Choose your class</p>
+    <div id="class-cards"></div>
+    <button id="btn-start" disabled>Enter the Dungeon</button>
+  </div>
+
+  <div id="screen-game" class="screen">
+    <canvas id="game-canvas"></canvas>
+    <div id="minimap"></div>
+    <div id="hud">
+      <div id="hud-level">Level 1</div>
+      <div id="hud-hp">HP: 100/100</div>
+      <div id="hud-xp">XP: 0/100</div>
+    </div>
+    <div id="joystick-zone"></div>
+    <div id="combat-controls">
+      <button id="btn-attack" class="action-btn">Attack</button>
+      <button id="btn-ability1" class="action-btn">Ability 1</button>
+      <button id="btn-ability2" class="action-btn">Ability 2</button>
+      <button id="btn-ability3" class="action-btn">Ability 3</button>
+      <button id="btn-descend" class="action-btn descend" style="display:none">Descend</button>
+    </div>
+  </div>
+
+  <div id="screen-game-over" class="screen">
+    <div id="result-title"></div>
+    <div id="result-sub"></div>
+    <button id="btn-restart">Play Again</button>
+  </div>
+
+  <script src="js/classes.js"></script>
+  <script src="js/dungeon.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/combat.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/controls.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
