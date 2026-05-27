@@ -84,6 +84,22 @@ function initButtons() {
     transitionTo('character-select');
     renderCharacterSelect();
   });
+  document.getElementById('btn-continue').addEventListener('click', () => {
+    const save = loadGame();
+    if (!save) return;
+    G = createInitialState();
+    G.selectedClass = save.selectedClass;
+    G.player = createPlayer(save.selectedClass);
+    G.player.hp = save.hp;
+    G.player.maxHp = save.maxHp;
+    G.player.atk = save.atk;
+    G.player.def = save.def;
+    G.player.xp = save.xp;
+    G.player.xpToNext = save.xpToNext;
+    G.player.level = save.playerLevel;
+    descendLevel(save.level);
+    transitionTo('game');
+  });
 }
 
 function checkDescend() {
@@ -136,6 +152,21 @@ function processInput(dt) {
         if (!item.collected && item.x === nx && item.y === ny) {
           item.collected = true;
           applyItem(item, G.player);
+        }
+      }
+
+      // Check trap room
+      if (G.dungeon) {
+        for (const room of G.dungeon.rooms) {
+          if (room.variant === 'trap' && !room.trapped &&
+              nx >= room.x && nx < room.x + room.w && ny >= room.y && ny < room.y + room.h) {
+            room.trapped = true;
+            const trapDmg = 10 + G.level * 3;
+            G.player.hp -= trapDmg;
+            addDamageNumber(G.player.x, G.player.y, '-' + trapDmg, '#e74c3c');
+            addLog(`You stepped on a trap! (-${trapDmg} HP)`);
+            break;
+          }
         }
       }
     }

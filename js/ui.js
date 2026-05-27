@@ -11,6 +11,10 @@ function renderCharacterSelect() {
       </div>
     </div>
   `).join('');
+  const saveBtn = document.getElementById('btn-continue');
+  if (saveBtn) {
+    saveBtn.style.display = loadGame() ? 'block' : 'none';
+  }
 }
 
 function selectClass(classKey) {

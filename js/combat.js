@@ -212,6 +212,14 @@ function killEnemy(e) {
   G.player.xp += e.xp;
   addLog(`Defeated ${e.name} (+${e.xp} XP)`);
   addDamageNumber(e.x, e.y, '+' + e.xp + ' XP', '#f1c40f');
+
+  // Loot drop
+  if (e.lootChance && Math.random() < e.lootChance) {
+    const dropType = Object.keys(ITEM_TEMPLATES)[Math.floor(Math.random() * Object.keys(ITEM_TEMPLATES).length)];
+    G.items.push({ type: 'item', itemType: dropType, x: e.x, y: e.y, collected: false });
+    addLog(`${e.name} dropped an item!`);
+  }
+
   checkLevelUp(G.player);
 }
 

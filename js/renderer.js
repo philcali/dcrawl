@@ -63,15 +63,15 @@ function render() {
       const tile = dungeon.grid[y][x];
       if (tile === TILE.WALL) {
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = '#2c3e50';
+        ctx.fillStyle = G.dungeon.biome.wallColor;
         ctx.fillRect(sx, sy, tileSize, tileSize);
-        ctx.strokeStyle = '#34495e';
+        ctx.strokeStyle = G.dungeon.biome.wallStroke;
         ctx.strokeRect(sx, sy, tileSize, tileSize);
       } else if (tile === TILE.FLOOR || tile === TILE.STAIRS) {
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = '#1a1a2e';
+        ctx.fillStyle = G.dungeon.biome.floorColor;
         ctx.fillRect(sx, sy, tileSize, tileSize);
-        ctx.strokeStyle = '#16213e';
+        ctx.strokeStyle = G.dungeon.biome.floorStroke;
         ctx.strokeRect(sx, sy, tileSize, tileSize);
         if (tile === TILE.STAIRS) {
           ctx.fillStyle = '#f1c40f';
@@ -210,11 +210,11 @@ function drawJoystickZone() {
 
 function drawMinimap() {
   const mm = document.getElementById('minimap');
-  const mc = mm.querySelector('canvas') || (() => {
-    const c = document.createElement('canvas');
-    mm.appendChild(c);
-    return c;
-  })();
+  let mc = mm.querySelector('canvas');
+  if (!mc) {
+    mc = document.createElement('canvas');
+    mm.appendChild(mc);
+  }
   const mctx = mc.getContext('2d');
 
   const size = mm.clientWidth || 80;
@@ -223,18 +223,36 @@ function drawMinimap() {
   mctx.fillStyle = '#0a0a0a';
   mctx.fillRect(0, 0, size, size);
 
+  // Invalidate cache on resize
+  if (G.minimapCache && (G.minimapCache.width !== size || G.minimapCache.height !== size)) {
+    G.minimapCache = null;
+    G.minimapDirty = true;
+  }
+
   const scale = size / GRID_W;
-  for (let y = 0; y < GRID_H; y++) {
-    for (let x = 0; x < GRID_W; x++) {
-      if (!G.explored[y][x]) continue;
-      if (G.dungeon.grid[y][x] === TILE.WALL) {
-        mctx.fillStyle = '#2c3e50';
-      } else {
-        mctx.fillStyle = '#34495e';
+
+  // Draw cached tile layer
+  if (G.minimapDirty) {
+    G.minimapDirty = false;
+    if (!G.minimapCache) {
+      G.minimapCache = document.createElement('canvas');
+    }
+    G.minimapCache.width = size;
+    G.minimapCache.height = size;
+    const cctx = G.minimapCache.getContext('2d');
+    for (let y = 0; y < GRID_H; y++) {
+      for (let x = 0; x < GRID_W; x++) {
+        if (!G.explored[y][x]) continue;
+        if (G.dungeon.grid[y][x] === TILE.WALL) {
+          cctx.fillStyle = G.dungeon.biome.wallColor;
+        } else {
+          cctx.fillStyle = G.dungeon.biome.floorColor;
+        }
+        cctx.fillRect(x * scale, y * scale, scale + 0.5, scale + 0.5);
       }
-      mctx.fillRect(x * scale, y * scale, scale + 0.5, scale + 0.5);
     }
   }
+  mctx.drawImage(G.minimapCache, 0, 0);
 
   // Player dot
   mctx.fillStyle = '#e74c3c';

@@ -5,6 +5,23 @@ const ROOM_MIN = 4;
 const ROOM_MAX = 10;
 const ROOM_TARGET = 8;
 
+const BIOMES = {
+  crypt:  { name: 'Crypt',  wallColor: '#2c3e50', floorColor: '#1a1a2e', wallStroke: '#34495e', floorStroke: '#16213e', enemies: ['skeleton', 'ghost'] },
+  dungeon:{ name: 'Dungeon',wallColor: '#3e2723', floorColor: '#1a1a2e', wallStroke: '#5d4037', floorStroke: '#2c1e16', enemies: ['orc', 'skeleton'] },
+  swamp:  { name: 'Swamp',  wallColor: '#1b5e20', floorColor: '#1a2e1a', wallStroke: '#2e7d32', floorStroke: '#0d3b0d', enemies: ['slime', 'rat'] },
+  inferno:{ name: 'Inferno',wallColor: '#4a148c', floorColor: '#1a0a2e', wallStroke: '#6a1b9a', floorStroke: '#3a0a5e', enemies: ['ghost', 'orc'] },
+};
+
+const ELITE_TEMPLATES = {
+  elite_slime:  { name: 'Elite Slime',  color: '#f1c40f', hpMult: 2.0, atkMult: 1.5, defMult: 1.5, lootChance: 0.3 },
+  elite_rat:    { name: 'Elite Rat',    color: '#bdc3c7', hpMult: 1.8, atkMult: 1.8, defMult: 1.2, lootChance: 0.25 },
+  elite_skeleton:{ name: 'Elite Skeleton', color: '#ecf0f1', hpMult: 2.0, atkMult: 1.5, defMult: 1.5, lootChance: 0.3 },
+  elite_orc:    { name: 'Elite Orc',    color: '#f1c40f', hpMult: 2.5, atkMult: 2.0, defMult: 2.0, lootChance: 0.35 },
+  elite_ghost:  { name: 'Elite Ghost',  color: '#d4af37', hpMult: 1.8, atkMult: 1.8, defMult: 0.5, lootChance: 0.25 },
+};
+
+const ELITE_MAP = { slime: 'elite_slime', rat: 'elite_rat', skeleton: 'elite_skeleton', ghost: 'elite_ghost', orc: 'elite_orc' };
+
 const ENEMY_TEMPLATES = {
   slime: { name: 'Slime', hp: 30, atk: 5, def: 1, speed: 1, xp: 15, color: '#2ecc71', aggro: 6 },
   rat:   { name: 'Rat',   hp: 25, atk: 7, def: 2, speed: 4, xp: 20, color: '#7f8c8d', aggro: 10 },
@@ -52,6 +69,20 @@ function generateDungeon(level) {
       }
     }
   }
+
+  // Assign room variants
+  const intermediateRooms = rooms.slice(1, -1);
+  for (let i = 0; i < intermediateRooms.length; i++) {
+    const r = intermediateRooms[i];
+    const roll = Math.random();
+    if (roll < 0.15) r.variant = 'treasure';
+    else if (roll < 0.25) r.variant = 'trap';
+    else if (roll < 0.35) r.variant = 'empty';
+  }
+
+  // Pick biome for this level
+  const biomeKeys = Object.keys(BIOMES);
+  const biome = BIOMES[biomeKeys[Math.floor(Math.random() * biomeKeys.length)]];
 
   // Connect rooms with L-shaped corridors
   for (let i = 1; i < rooms.length; i++) {
@@ -115,12 +146,18 @@ function generateDungeon(level) {
   } else {
     for (let i = 1; i < rooms.length; i++) {
       const room = rooms[i];
+      if (room.variant === 'treasure') continue;
+      if (room.variant === 'empty') continue;
       const count = 1 + Math.floor(Math.random() * Math.max(1, Math.ceil(level / 4)));
       for (let j = 0; j < count; j++) {
         const mx = room.x + 1 + Math.floor(Math.random() * (room.w - 2));
         const my = room.y + 1 + Math.floor(Math.random() * (room.h - 2));
         if (grid[my][mx] === TILE.FLOOR) {
-          const type = pickEnemyType(level);
+          let type = pickEnemyType(level);
+          // Elite chance
+          if (Math.random() < 0.08 && ELITE_MAP[type]) {
+            type = ELITE_MAP[type];
+          }
           enemies.push(createEnemyFromTemplate(type, mx, my, level));
         }
       }
@@ -130,8 +167,19 @@ function generateDungeon(level) {
   // Items
   const itemKeys = Object.keys(ITEM_TEMPLATES);
   for (let i = 1; i < rooms.length; i++) {
-    if (Math.random() < 0.35) {
-      const room = rooms[i];
+    const room = rooms[i];
+    if (room.variant === 'empty') continue;
+    let itemChance = room.variant === 'treasure' ? 0.7 : 0.35;
+    if (Math.random() < itemChance) {
+      const ix = room.x + 1 + Math.floor(Math.random() * (room.w - 2));
+      const iy = room.y + 1 + Math.floor(Math.random() * (room.h - 2));
+      if (grid[iy][ix] === TILE.FLOOR) {
+        const itemKey = itemKeys[Math.floor(Math.random() * itemKeys.length)];
+        items.push({ type: 'item', itemType: itemKey, x: ix, y: iy, collected: false });
+      }
+    }
+    // Treasure rooms get a second item
+    if (room.variant === 'treasure' && Math.random() < 0.6) {
       const ix = room.x + 1 + Math.floor(Math.random() * (room.w - 2));
       const iy = room.y + 1 + Math.floor(Math.random() * (room.h - 2));
       if (grid[iy][ix] === TILE.FLOOR) {
@@ -141,7 +189,7 @@ function generateDungeon(level) {
     }
   }
 
-  return { grid, rooms, playerStart, enemies, items, explored, walls: [] };
+  return { grid, rooms, playerStart, enemies, items, explored, walls: [], biome };
 }
 
 function carveLine(grid, x0, y0, x1, y1) {
@@ -183,6 +231,21 @@ function carveCorridor(grid, x0, y0, x1, y1) {
 
 
 function createEnemyFromTemplate(type, x, y, level) {
+  const elite = ELITE_TEMPLATES[type];
+  if (elite) {
+    const baseType = type.replace('elite_', '');
+    const t = ENEMY_TEMPLATES[baseType] || ENEMY_TEMPLATES.slime;
+    const scale = 1 + (level - 1) * 0.15;
+    return {
+      type: 'enemy', enemyType: type, name: elite.name,
+      x, y, targetX: x, targetY: y,
+      hp: Math.floor(t.hp * scale * elite.hpMult), maxHp: Math.floor(t.hp * scale * elite.hpMult),
+      atk: Math.floor(t.atk * scale * elite.atkMult), def: Math.floor(t.def * scale * elite.defMult),
+      speed: t.speed, xp: Math.floor(t.xp * scale * 1.5),
+      color: elite.color, aggro: t.aggro, isBoss: false,
+      stunned: 0, attackCooldown: 0, lootChance: elite.lootChance,
+    };
+  }
   const t = ENEMY_TEMPLATES[type];
   const scale = 1 + (level - 1) * 0.15;
   return {
@@ -192,11 +255,22 @@ function createEnemyFromTemplate(type, x, y, level) {
     atk: Math.floor(t.atk * scale), def: Math.floor(t.def * scale),
     speed: t.speed, xp: Math.floor(t.xp * scale),
     color: t.color, aggro: t.aggro, isBoss: t.isBoss || false,
-    stunned: 0, attackCooldown: 0,
+    stunned: 0, attackCooldown: 0, lootChance: 0.05,
   };
 }
 
 function pickEnemyType(level) {
+  if (!G || !G.dungeon || !G.dungeon.biome) {
+    if (level <= 5) return Math.random() < 0.6 ? 'slime' : 'rat';
+    if (level <= 10) return ['rat', 'skeleton'][Math.floor(Math.random() * 2)];
+    if (level <= 15) return ['skeleton', 'ghost'][Math.floor(Math.random() * 2)];
+    return ['orc', 'ghost'][Math.floor(Math.random() * 2)];
+  }
+  const biomeEnemies = G.dungeon.biome.enemies;
+  // 70% biome-biased, 30% level-based for variety
+  if (Math.random() < 0.7 && biomeEnemies.length === 2) {
+    return biomeEnemies[Math.floor(Math.random() * 2)];
+  }
   if (level <= 5) return Math.random() < 0.6 ? 'slime' : 'rat';
   if (level <= 10) return ['rat', 'skeleton'][Math.floor(Math.random() * 2)];
   if (level <= 15) return ['skeleton', 'ghost'][Math.floor(Math.random() * 2)];
@@ -215,6 +289,7 @@ function updateExplored(player, explored, grid) {
       }
     }
   }
+  G.minimapDirty = true;
 }
 
 function getAdjacentEnemies(ex, ey, enemies, range) {
