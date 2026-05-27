@@ -1,6 +1,9 @@
 function createPlayer(classKey) {
   const cls = CLASSES[classKey];
-  const abilities = cls.abilities.map(a => ({ ...a, cooldownTimer: 0 }));
+  const abilities = [
+    { ...cls.standardAttack, cooldownTimer: 0 },
+    ...cls.abilities.map(a => ({ ...a, cooldownTimer: 0 })),
+  ];
   return {
     type: 'player', class: classKey,
     x: 0, y: 0, targetX: 0, targetY: 0,
@@ -32,6 +35,7 @@ function applyItem(item, player) {
     case 'xp':
       player.xp += t.value;
       addDamageNumber(player.x, player.y, '+' + t.value + ' XP', '#9b59b6');
+      checkLevelUp(player);
       break;
   }
   addLog(`Picked up ${t.name}`);

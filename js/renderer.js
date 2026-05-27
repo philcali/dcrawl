@@ -176,20 +176,54 @@ function render() {
 
   // Draw minimap
   drawMinimap();
+
+  // Draw joystick visual
+  drawJoystickZone();
+}
+
+function drawJoystickZone() {
+  const zone = document.getElementById('joystick-zone');
+  if (!zone) return;
+  let canvas = zone.querySelector('canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    zone.appendChild(canvas);
+  }
+  const ctx = canvas.getContext('2d');
+  const w = zone.clientWidth;
+  const h = zone.clientHeight;
+  if (w === 0 || h === 0) return;
+  canvas.width = w;
+  canvas.height = h;
+
+  const cx = w / 2;
+  const cy = h / 2;
+  const r = Math.min(w, h) * 0.35;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
 }
 
 function drawMinimap() {
   const mm = document.getElementById('minimap');
-  const mmCanvas = mm.querySelector('canvas');
-  if (!mmCanvas) {
-    mm.innerHTML = '<canvas width="80" height="80"></canvas>';
-  }
-  const mc = mm.querySelector('canvas');
+  const mc = mm.querySelector('canvas') || (() => {
+    const c = document.createElement('canvas');
+    mm.appendChild(c);
+    return c;
+  })();
   const mctx = mc.getContext('2d');
-  mctx.fillStyle = '#0a0a0a';
-  mctx.fillRect(0, 0, 80, 80);
 
-  const scale = 80 / GRID_W;
+  const size = mm.clientWidth || 80;
+  mc.width = size;
+  mc.height = size;
+  mctx.fillStyle = '#0a0a0a';
+  mctx.fillRect(0, 0, size, size);
+
+  const scale = size / GRID_W;
   for (let y = 0; y < GRID_H; y++) {
     for (let x = 0; x < GRID_W; x++) {
       if (!G.explored[y][x]) continue;
@@ -207,6 +241,17 @@ function drawMinimap() {
   mctx.beginPath();
   mctx.arc(G.player.x * scale, G.player.y * scale, 3, 0, Math.PI * 2);
   mctx.fill();
+
+  // Stairs marker
+  for (let y = 0; y < GRID_H; y++) {
+    for (let x = 0; x < GRID_W; x++) {
+      if (!G.explored[y][x]) continue;
+      if (G.dungeon.grid[y][x] === TILE.STAIRS) {
+        mctx.fillStyle = '#f1c40f';
+        mctx.fillRect(x * scale, y * scale, scale + 0.5, scale + 0.5);
+      }
+    }
+  }
 
   // Enemy dots
   for (const e of G.enemies) {

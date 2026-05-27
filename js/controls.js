@@ -29,6 +29,7 @@ function initJoystick() {
   if (!zone) return;
   let touchId = null;
   let startX, startY;
+  let moved = false;
 
   zone.addEventListener('touchstart', e => {
     e.preventDefault();
@@ -36,6 +37,7 @@ function initJoystick() {
     touchId = t.identifier;
     startX = t.clientX;
     startY = t.clientY;
+    moved = false;
     joystickActive = true;
   });
 
@@ -47,6 +49,7 @@ function initJoystick() {
       const dy = t.clientY - startY;
       const dist2 = Math.sqrt(dx * dx + dy * dy);
       if (dist2 > 15) {
+        moved = true;
         joystickDir.x = dx / dist2;
         joystickDir.y = dy / dist2;
       }
@@ -56,11 +59,13 @@ function initJoystick() {
   const endTouch = e => {
     e.preventDefault();
     for (const t of e.changedTouches) {
-      if (t.identifier === touchId) {
-        touchId = null;
-        joystickActive = false;
-        joystickDir = { x: 0, y: 0 };
+      if (t.identifier !== touchId) continue;
+      if (!moved && G && G.player) {
+        playerAttack(0);
       }
+      touchId = null;
+      joystickActive = false;
+      joystickDir = { x: 0, y: 0 };
     }
   };
   zone.addEventListener('touchend', endTouch);
@@ -71,7 +76,6 @@ function initButtons() {
   document.getElementById('btn-attack').addEventListener('click', () => { if (G && G.player) playerAttack(0); });
   document.getElementById('btn-ability1').addEventListener('click', () => { if (G && G.player) playerAttack(1); });
   document.getElementById('btn-ability2').addEventListener('click', () => { if (G && G.player) playerAttack(2); });
-  document.getElementById('btn-ability3').addEventListener('click', () => { if (G && G.player) playerAttack(3); });
   document.getElementById('btn-descend').addEventListener('click', () => { if (G) checkDescend(); });
   document.getElementById('btn-start').addEventListener('click', () => {
     if (G.selectedClass) startGame(G.selectedClass);

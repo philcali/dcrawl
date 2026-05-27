@@ -6,6 +6,7 @@ function renderCharacterSelect() {
       <div class="name">${cls.name}</div>
       <div class="stats">HP:${cls.stats.hp} ATK:${cls.stats.atk} DEF:${cls.stats.def}</div>
       <div class="abilities">
+        <div>${cls.standardAttack.name}: ${cls.standardAttack.desc}</div>
         ${cls.abilities.map(a => `<div>${a.name}: ${a.desc}</div>`).join('')}
       </div>
     </div>
@@ -24,9 +25,9 @@ function updateHUD() {
   document.getElementById('hud-hp').textContent = `HP: ${G.player.hp}/${G.player.maxHp}`;
   document.getElementById('hud-xp').textContent = `L${G.player.level} - XP: ${G.player.xp}/${G.player.xpToNext}`;
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     const btn = document.getElementById(`btn-ability${i + 1}`);
-    const ability = G.player.abilities[i];
+    const ability = G.player.abilities[i + 1];
     if (ability) {
       if (ability.cooldownTimer > 0) {
         btn.disabled = true;

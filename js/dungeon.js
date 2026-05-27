@@ -59,11 +59,11 @@ function generateDungeon(level) {
     const b = rooms[i];
     const horizontalFirst = Math.random() > 0.5;
     if (horizontalFirst) {
-      carveLine(grid, a.cx, a.cy, b.cx, a.cy);
-      carveLine(grid, b.cx, a.cy, b.cx, b.cy);
+      carveCorridor(grid, a.cx, a.cy, b.cx, a.cy);
+      carveCorridor(grid, b.cx, a.cy, b.cx, b.cy);
     } else {
-      carveLine(grid, a.cx, a.cy, a.cx, b.cy);
-      carveLine(grid, a.cx, b.cy, b.cx, b.cy);
+      carveCorridor(grid, a.cx, a.cy, a.cx, b.cy);
+      carveCorridor(grid, a.cx, b.cy, b.cx, b.cy);
     }
   }
 
@@ -161,6 +161,26 @@ function carveLine(grid, x0, y0, x1, y1) {
     if (e2 < dx) { err += dx; y += sy; }
   }
 }
+
+function carveCorridor(grid, x0, y0, x1, y1) {
+  carveLine(grid, x0, y0, x1, y1);
+  // Randomly widen: ~35% chance to add a 2-wide or 2-tall offset
+  const horizontal = y0 === y1;
+  if (horizontal && Math.random() < 0.35) {
+    const off = Math.random() < 0.5 ? -1 : 1;
+    for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) {
+      const y = y0 + off;
+      if (y >= 0 && y < GRID_H) grid[y][x] = TILE.FLOOR;
+    }
+  } else if (!horizontal && Math.random() < 0.35) {
+    const off = Math.random() < 0.5 ? -1 : 1;
+    for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) {
+      const x = x0 + off;
+      if (x >= 0 && x < GRID_W) grid[y][x] = TILE.FLOOR;
+    }
+  }
+}
+
 
 function createEnemyFromTemplate(type, x, y, level) {
   const t = ENEMY_TEMPLATES[type];
