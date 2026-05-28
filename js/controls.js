@@ -8,7 +8,7 @@ const MOVE_INTERVAL = 0.12;
 function initControls() {
   document.addEventListener('keydown', e => {
     keys[e.key] = true;
-    if (e.key >= '1' && e.key <= '4') {
+    if (e.key >= '1' && e.key <= '9') {
       playerAttack(parseInt(e.key) - 1);
     }
     if (e.key === ' ' || e.key === 'f') {
@@ -16,6 +16,15 @@ function initControls() {
     }
     if (e.key === 'Enter' || e.key === 's' || e.key === 'ArrowDown') {
       checkDescend();
+    }
+    if (e.key === 'Tab' || e.key === 'e' || e.key === 'E') {
+      e.preventDefault();
+      toggleStatusPage();
+    }
+    if (e.key === 'Escape') {
+      if (G && G.statusPageOpen) {
+        closeStatusPage();
+      }
     }
   });
   document.addEventListener('keyup', e => { keys[e.key] = false; });
@@ -77,6 +86,8 @@ function initButtons() {
   document.getElementById('btn-ability1').addEventListener('click', () => { if (G && G.player) playerAttack(1); });
   document.getElementById('btn-ability2').addEventListener('click', () => { if (G && G.player) playerAttack(2); });
   document.getElementById('btn-descend').addEventListener('click', () => { if (G) checkDescend(); });
+  document.getElementById('btn-status').addEventListener('click', () => { if (G) toggleStatusPage(); });
+  document.getElementById('btn-close-status').addEventListener('click', () => { if (G) closeStatusPage(); });
   document.getElementById('btn-start').addEventListener('click', () => {
     if (G.selectedClass) startGame(G.selectedClass);
   });
@@ -97,9 +108,42 @@ function initButtons() {
     G.player.xp = save.xp;
     G.player.xpToNext = save.xpToNext;
     G.player.level = save.playerLevel;
+    if (save.equipment) {
+      G.player.equipment = save.equipment;
+      G.player.equipmentBonuses = save.equipmentBonuses || { atk: 0, def: 0, maxHp: 0 };
+      G.player.skills = save.skills || [];
+      rebuildEquipmentBonuses(G.player);
+      // Re-apply gear skills to abilities
+      for (const skillKey of G.player.skills) {
+        if (EQUIPMENT_SKILLS[skillKey]) {
+          G.player.abilities.push({ ...EQUIPMENT_SKILLS[skillKey], cooldownTimer: 0, isGearSkill: true });
+        }
+      }
+    }
     descendLevel(save.level);
     transitionTo('game');
   });
+}
+
+function toggleStatusPage() {
+  if (G.statusPageOpen) {
+    closeStatusPage();
+  } else {
+    openStatusPage();
+  }
+}
+
+function openStatusPage() {
+  G.statusPageOpen = true;
+  G.paused = true;
+  transitionTo('status');
+  renderStatusPage();
+}
+
+function closeStatusPage() {
+  G.statusPageOpen = false;
+  G.paused = false;
+  transitionTo('game');
 }
 
 function checkDescend() {
@@ -152,6 +196,9 @@ function processInput(dt) {
         if (!item.collected && item.x === nx && item.y === ny) {
           item.collected = true;
           applyItem(item, G.player);
+          // Equipment auto-drop may have placed an item at the current position;
+          // break to avoid re-picking it up in the same tick.
+          if (item.type === 'equipment') break;
         }
       }
 

@@ -97,14 +97,30 @@ function render() {
   // Draw items
   for (const item of items) {
     if (item.collected) continue;
-    const t = ITEM_TEMPLATES[item.itemType];
     const dx2 = item.x - player.x, dy2 = item.y - player.y;
     if (Math.sqrt(dx2 * dx2 + dy2 * dy2) > 8) continue;
     ctx.globalAlpha = G.explored[item.y][item.x] ? 1 : 0.3;
-    ctx.fillStyle = t.color;
-    ctx.beginPath();
-    ctx.arc(item.x * tileSize + tileSize / 2, item.y * tileSize + tileSize / 2, tileSize * 0.25, 0, Math.PI * 2);
-    ctx.fill();
+    if (item.type === 'equipment') {
+      const template = EQUIPMENT_TEMPLATES[item.templateKey];
+      const color = EQUIPMENT_RARITIES[template.rarity].color;
+      ctx.fillStyle = color;
+      const cx = item.x * tileSize + tileSize / 2;
+      const cy = item.y * tileSize + tileSize / 2;
+      const r = tileSize * 0.25;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r);
+      ctx.lineTo(cx + r, cy);
+      ctx.lineTo(cx, cy + r);
+      ctx.lineTo(cx - r, cy);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      const t = ITEM_TEMPLATES[item.itemType];
+      ctx.fillStyle = t.color;
+      ctx.beginPath();
+      ctx.arc(item.x * tileSize + tileSize / 2, item.y * tileSize + tileSize / 2, tileSize * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   // Draw enemies

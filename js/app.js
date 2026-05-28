@@ -4,7 +4,7 @@ function gameLoop(timestamp) {
   const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
   lastTime = timestamp;
 
-  if (G && G.screen === 'game' && !G.gameOver) {
+  if (G && G.screen === 'game' && !G.gameOver && !G.statusPageOpen) {
     processInput(dt);
     updateExplored(G.player, G.explored, G.dungeon.grid);
     updateEnemies(dt);

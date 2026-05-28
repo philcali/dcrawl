@@ -90,6 +90,104 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; f
 #btn-restart { padding: 1rem 3rem; font-size: 1.2rem; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 #btn-restart:hover { background: #c0392b; }
 
+/* Status Screen */
+#screen-status {
+  padding: 2rem;
+  overflow-y: auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+#status-content {
+  max-width: 600px;
+  width: 100%;
+}
+#status-content h2 {
+  color: #f1c40f;
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.2rem;
+}
+#equipment-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.equip-slot {
+  background: #1a1a2e;
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 0.8rem;
+}
+.equip-slot.equipped {
+  border-color: var(--rarity-color, #bdc3c7);
+}
+.equip-slot .slot-name {
+  font-size: 0.7rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.equip-slot .item-name {
+  font-weight: bold;
+  margin: 0.2rem 0;
+}
+.equip-slot .item-stats {
+  font-size: 0.75rem;
+  color: #999;
+}
+.equip-slot .item-skill {
+  font-size: 0.7rem;
+  color: #9b59b6;
+  margin-top: 0.2rem;
+}
+.equip-slot.empty {
+  opacity: 0.4;
+}
+#stats-breakdown {
+  background: #1a1a2e;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.2rem 0;
+  font-size: 0.85rem;
+}
+.stat-row .stat-label { color: #888; }
+.stat-row .stat-value { font-weight: bold; }
+.stat-row .stat-value.total { color: #f1c40f; }
+.stat-row .stat-value.bonus { color: #2ecc71; }
+#skills-list {
+  background: #1a1a2e;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.skill-item {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #222;
+  font-size: 0.85rem;
+}
+.skill-item:last-child { border-bottom: none; }
+.skill-item .skill-name { color: #e74c3c; font-weight: bold; }
+.skill-item .skill-gear { color: #9b59b6; font-size: 0.7rem; margin-left: 0.3rem; }
+.skill-item .skill-desc { color: #888; font-size: 0.75rem; }
+.skill-item .skill-cooldown { color: #666; font-size: 0.75rem; margin-left: 0.3rem; }
+#btn-close-status {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  padding: 0.7rem 2rem;
+  background: #555;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+#btn-close-status:hover { background: #777; }
+
 /* Responsive */
 @media (max-width: 500px) {
   .class-card { width: 130px; padding: 1rem; }
@@ -99,4 +197,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; f
   #hud { gap: 0.3rem; }
   #hud div { font-size: 0.7rem; padding: 0.25rem 0.4rem; }
   #combat-controls .action-btn { height: 44px; font-size: 0.6rem; min-width: 40px; }
+  #screen-status { padding: 1rem; }
+  #equipment-slots { grid-template-columns: 1fr; }
+  #status-content h2 { font-size: 1rem; }
 }

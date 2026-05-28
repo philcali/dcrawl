@@ -79,6 +79,9 @@ function saveGame() {
     xp: G.player.xp,
     xpToNext: G.player.xpToNext,
     playerLevel: G.player.level,
+    equipment: G.player.equipment,
+    equipmentBonuses: G.player.equipmentBonuses,
+    skills: G.player.skills,
   };
   try {
     localStorage.setItem('dcrawl_save', JSON.stringify(data));

@@ -38,6 +38,72 @@ const ITEM_TEMPLATES = {
   xp_scroll:      { name: 'XP Scroll',     color: '#9b59b6', effect: 'xp', value: 50 },
 };
 
+const EQUIPMENT_RARITIES = {
+  common:   { weight: 50, color: '#bdc3c7' },
+  uncommon: { weight: 30, color: '#2ecc71' },
+  rare:     { weight: 15, color: '#3498db' },
+  epic:     { weight: 5,  color: '#9b59b6' },
+};
+
+const EQUIPMENT_SKILLS = {
+  whirlwind: {
+    name: 'Whirlwind', cooldown: 4, type: 'aoe_attack', range: 2, multiplier: 1.2,
+    desc: 'Spin attack (range 2)',
+  },
+  counter_strike: {
+    name: 'Counter Strike', cooldown: 5, type: 'attack', multiplier: 2.5,
+    desc: 'Powerful counter-attack',
+  },
+  arcane_blast: {
+    name: 'Arcane Blast', cooldown: 3, type: 'aoe_attack', range: 3, multiplier: 1.5,
+    desc: 'Homing fireballs (range 3)',
+  },
+  barrier: {
+    name: 'Barrier', cooldown: 6, type: 'buff_shield', range: 3, value: 15,
+    desc: 'Shield nearby allies for 3s',
+  },
+  phase: {
+    name: 'Phase', cooldown: 8, type: 'stealth', duration: 3,
+    desc: 'Invisible for 3s',
+  },
+};
+
+const EQUIPMENT_TEMPLATES = {
+  iron_sword:     { name: 'Iron Sword',     slot: 'weapon',     rarity: 'common',   primaryStat: 'atk', primaryValue: 5,  statBonuses: { atk: 5 },  skillGrant: null },
+  steel_blade:    { name: 'Steel Blade',    slot: 'weapon',     rarity: 'uncommon', primaryStat: 'atk', primaryValue: 8,  statBonuses: { atk: 8 },  skillGrant: 'whirlwind' },
+  flame_sword:    { name: 'Flame Sword',    slot: 'weapon',     rarity: 'rare',     primaryStat: 'atk', primaryValue: 12, statBonuses: { atk: 12 }, skillGrant: 'whirlwind' },
+  shadow_blade:   { name: 'Shadow Blade',   slot: 'weapon',     rarity: 'epic',     primaryStat: 'atk', primaryValue: 18, statBonuses: { atk: 18 }, skillGrant: 'counter_strike' },
+  wooden_shield:  { name: 'Wooden Shield',  slot: 'offhand',  rarity: 'common',   primaryStat: 'def', primaryValue: 3,  statBonuses: { def: 3 },  skillGrant: null },
+  iron_shield:    { name: 'Iron Shield',    slot: 'offhand',  rarity: 'uncommon', primaryStat: 'def', primaryValue: 6,  statBonuses: { def: 6 },  skillGrant: null },
+  magic_shield:   { name: 'Magic Shield',   slot: 'offhand',  rarity: 'rare',     primaryStat: 'def', primaryValue: 10, statBonuses: { def: 10 }, skillGrant: 'barrier' },
+  leather_helm:   { name: 'Leather Helm',   slot: 'head',     rarity: 'common',   primaryStat: 'maxHp', primaryValue: 2, statBonuses: { maxHp: 2 }, skillGrant: null },
+  steel_helm:     { name: 'Steel Helm',     slot: 'head',     rarity: 'uncommon', primaryStat: 'maxHp', primaryValue: 5, statBonuses: { maxHp: 5, def: 2 }, skillGrant: null },
+  mage_crown:     { name: 'Mage Crown',     slot: 'head',     rarity: 'rare',     primaryStat: 'maxHp', primaryValue: 8, statBonuses: { maxHp: 8, atk: 3 }, skillGrant: 'arcane_blast' },
+  leather_vest:   { name: 'Leather Vest',   slot: 'body',     rarity: 'common',   primaryStat: 'def', primaryValue: 3,  statBonuses: { def: 3, maxHp: 2 }, skillGrant: null },
+  chain_mail:     { name: 'Chain Mail',     slot: 'body',     rarity: 'uncommon', primaryStat: 'def', primaryValue: 5,  statBonuses: { def: 5, maxHp: 3 }, skillGrant: null },
+  plate_armor:    { name: 'Plate Armor',    slot: 'body',     rarity: 'rare',     primaryStat: 'def', primaryValue: 10, statBonuses: { def: 10, maxHp: 8 }, skillGrant: null },
+  shadow_cloak:   { name: 'Shadow Cloak',   slot: 'body',     rarity: 'epic',     primaryStat: 'def', primaryValue: 15, statBonuses: { def: 15, maxHp: 5 }, skillGrant: 'phase' },
+};
+
+function generateEquipmentItem(level) {
+  const rarityKeys = Object.keys(EQUIPMENT_RARITIES);
+  const weights = rarityKeys.map((k, i) => {
+    let w = EQUIPMENT_RARITIES[k].weight;
+    if (i > 0) w *= (1 + level * 0.04);
+    return w;
+  });
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  let roll = Math.random() * totalWeight;
+  let chosen = rarityKeys[0];
+  for (let i = 0; i < weights.length; i++) {
+    roll -= weights[i];
+    if (roll <= 0) { chosen = rarityKeys[i]; break; }
+  }
+  const tierItems = Object.entries(EQUIPMENT_TEMPLATES).filter(([, t]) => t.rarity === chosen);
+  const [key] = tierItems[Math.floor(Math.random() * tierItems.length)];
+  return { type: 'equipment', templateKey: key };
+}
+
 function generateDungeon(level) {
   const grid = Array.from({ length: GRID_H }, () => Array(GRID_W).fill(TILE.WALL));
   const rooms = [];
@@ -169,7 +235,19 @@ function generateDungeon(level) {
   for (let i = 1; i < rooms.length; i++) {
     const room = rooms[i];
     if (room.variant === 'empty') continue;
-    let itemChance = room.variant === 'treasure' ? 0.7 : 0.35;
+    // Equipment drop chance in treasure rooms
+    if (room.variant === 'treasure' && Math.random() < 0.5) {
+      const ix = room.x + 1 + Math.floor(Math.random() * (room.w - 2));
+      const iy = room.y + 1 + Math.floor(Math.random() * (room.h - 2));
+      if (grid[iy][ix] === TILE.FLOOR) {
+        const equip = generateEquipmentItem(level);
+        equip.x = ix;
+        equip.y = iy;
+        equip.collected = false;
+        items.push(equip);
+      }
+    }
+    let itemChance = room.variant === 'treasure' ? 0.5 : 0.25;
     if (Math.random() < itemChance) {
       const ix = room.x + 1 + Math.floor(Math.random() * (room.w - 2));
       const iy = room.y + 1 + Math.floor(Math.random() * (room.h - 2));
@@ -179,7 +257,7 @@ function generateDungeon(level) {
       }
     }
     // Treasure rooms get a second item
-    if (room.variant === 'treasure' && Math.random() < 0.6) {
+    if (room.variant === 'treasure' && Math.random() < 0.5) {
       const ix = room.x + 1 + Math.floor(Math.random() * (room.w - 2));
       const iy = room.y + 1 + Math.floor(Math.random() * (room.h - 2));
       if (grid[iy][ix] === TILE.FLOOR) {

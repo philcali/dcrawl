@@ -15,7 +15,7 @@ function playerAttack(abilityIndex) {
       targets.forEach(e => {
         let mult = ability.multiplier;
         if (ability.requiresBehind && isBehind(player, e)) mult = 3.0;
-        const dmg = Math.max(1, Math.floor(player.atk * mult) - e.def);
+        const dmg = Math.max(1, Math.floor(getEffectiveStat(player, 'atk') * mult) - e.def);
         e.hp -= dmg;
         addDamageNumber(e.x, e.y, dmg, '#e74c3c');
         addParticle(e.x, e.y, '#e74c3c');
@@ -30,7 +30,7 @@ function playerAttack(abilityIndex) {
       }).slice(0, 1);
       if (targets.length === 0) return;
       const e = targets[0];
-      let dmg = Math.max(1, Math.floor(player.atk * ability.multiplier) - e.def);
+      let dmg = Math.max(1, Math.floor(getEffectiveStat(player, 'atk') * ability.multiplier) - e.def);
       e.hp -= dmg;
       addDamageNumber(e.x, e.y, dmg, '#e67e22');
       addParticle(e.x, e.y, '#e67e22');
@@ -42,7 +42,7 @@ function playerAttack(abilityIndex) {
       const targets = getEnemiesInRange(player.x, player.y, ability.range, enemies);
       if (targets.length === 0) return;
       targets.forEach(e => {
-        const dmg = Math.max(1, Math.floor(player.atk * ability.multiplier) - e.def);
+        const dmg = Math.max(1, Math.floor(getEffectiveStat(player, 'atk') * ability.multiplier) - e.def);
         e.hp -= dmg;
         addDamageNumber(e.x, e.y, dmg, '#e67e22');
         addParticle(e.x, e.y, '#e67e22');
@@ -54,7 +54,7 @@ function playerAttack(abilityIndex) {
       let targets = getEnemiesInRange(player.x, player.y, ability.range, enemies).slice(0, ability.targets);
       if (targets.length === 0) return;
       targets.forEach(e => {
-        const dmg = Math.max(1, Math.floor(player.atk * ability.multiplier) - e.def);
+        const dmg = Math.max(1, Math.floor(getEffectiveStat(player, 'atk') * ability.multiplier) - e.def);
         e.hp -= dmg;
         addDamageNumber(e.x, e.y, dmg, '#9b59b6');
         addParticle(e.x, e.y, '#9b59b6');
@@ -63,8 +63,8 @@ function playerAttack(abilityIndex) {
       break;
     }
     case 'heal': {
-      const heal = Math.floor(player.maxHp * ability.percent);
-      player.hp = Math.min(player.maxHp, player.hp + heal);
+      const heal = Math.floor(getEffectiveStat(player, 'maxHp') * ability.percent);
+      player.hp = Math.min(getEffectiveStat(player, 'maxHp'), player.hp + heal);
       addDamageNumber(player.x, player.y, '+' + heal, '#2ecc71');
       addParticle(player.x, player.y, '#2ecc71');
       playSound('heal');
@@ -200,7 +200,7 @@ function updateCooldowns(dt) {
 }
 
 function getEffectiveDef(player) {
-  let def = player.def;
+  let def = getEffectiveStat(player, 'def');
   for (const b of player.buffs) {
     if (b.type === 'def') def += b.value;
     if (b.type === 'shield') def += b.value;
@@ -218,6 +218,16 @@ function killEnemy(e) {
     const dropType = Object.keys(ITEM_TEMPLATES)[Math.floor(Math.random() * Object.keys(ITEM_TEMPLATES).length)];
     G.items.push({ type: 'item', itemType: dropType, x: e.x, y: e.y, collected: false });
     addLog(`${e.name} dropped an item!`);
+  }
+  // Equipment drop from enemies
+  const gearChance = 0.15 + G.level * 0.0075;
+  if (Math.random() < gearChance) {
+    const gear = generateEquipmentItem(G.level);
+    gear.x = e.x;
+    gear.y = e.y;
+    gear.collected = false;
+    G.items.push(gear);
+    addLog(`${e.name} dropped some gear!`);
   }
 
   checkLevelUp(G.player);
