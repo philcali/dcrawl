@@ -128,7 +128,7 @@ function render() {
     if (e.hp <= 0) continue;
     const dx2 = e.x - player.x, dy2 = e.y - player.y;
     if (Math.sqrt(dx2 * dx2 + dy2 * dy2) > 8) continue;
-    const alpha = G.explored[e.y][e.x] ? 1 : 0.3;
+    const alpha = G.explored[Math.round(e.y)][Math.round(e.x)] ? 1 : 0.3;
     ctx.globalAlpha = alpha;
 
     // Body

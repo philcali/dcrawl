@@ -357,7 +357,7 @@ function createEnemyFromTemplate(type, x, y, level) {
       atk: Math.floor(t.atk * scale * elite.atkMult), def: Math.floor(t.def * scale * elite.defMult),
       speed: t.speed, xp: Math.floor(t.xp * scale * 1.5),
       color: elite.color, aggro: t.aggro, isBoss: false,
-      stunned: 0, attackCooldown: 0, lootChance: elite.lootChance,
+      stunned: 0, attackCooldown: 0, lootChance: elite.lootChance, moveTimer: 0,
     };
   }
   const t = ENEMY_TEMPLATES[type];
@@ -369,7 +369,7 @@ function createEnemyFromTemplate(type, x, y, level) {
     atk: Math.floor(t.atk * scale), def: Math.floor(t.def * scale),
     speed: t.speed, xp: Math.floor(t.xp * scale),
     color: t.color, aggro: t.aggro, isBoss: t.isBoss || false,
-    stunned: 0, attackCooldown: 0, lootChance: 0.05,
+    stunned: 0, attackCooldown: 0, lootChance: 0.05, moveTimer: 0,
   };
 }
 
